@@ -35,16 +35,15 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#include <costmap_2d/static_layer.h>
+#include <costmap_2d/road_layer.h>
 #include <costmap_2d/costmap_math.h>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(costmap_2d::StaticLayer, costmap_2d::Layer)
+PLUGINLIB_EXPORT_CLASS(costmap_2d::RoadLayer, costmap_2d::Layer)
 
 using costmap_2d::NO_INFORMATION;
 using costmap_2d::LETHAL_OBSTACLE;
 using costmap_2d::FREE_SPACE;
-
 using namespace std;
 namespace costmap_2d
 {
@@ -61,15 +60,15 @@ typedef struct poin2i
   unsigned int y;
 }poin2i;
 
-StaticLayer::StaticLayer() : dsrv_(NULL) {}
+RoadLayer::RoadLayer() : dsrv_(NULL) {}
 
-StaticLayer::~StaticLayer()
+RoadLayer::~RoadLayer()
 {
   if(dsrv_)
     delete dsrv_;
 }
 
-void StaticLayer::onInitialize()
+void RoadLayer::onInitialize()
 {
   ros::NodeHandle nh("~/" + name_), g_nh;
   current_ = true;
@@ -92,7 +91,7 @@ void StaticLayer::onInitialize()
   unknown_cost_value_ = temp_unknown_cost_value;
   //we'll subscribe to the latched topic that the map server uses
   ROS_INFO("Requesting the map...");
-  map_sub_ = g_nh.subscribe(map_topic, 1, &StaticLayer::incomingMap, this);
+  map_sub_ = g_nh.subscribe(map_topic, 1, &RoadLayer::incomingMap, this);
   map_received_ = false;
   has_updated_data_ = false;
 
@@ -108,7 +107,7 @@ void StaticLayer::onInitialize()
   if(subscribe_to_updates_)
   {
     ROS_INFO("Subscribing to updates");
-    map_update_sub_ = g_nh.subscribe(map_topic + "_updates", 10, &StaticLayer::incomingUpdate, this);
+    map_update_sub_ = g_nh.subscribe(map_topic + "_updates", 10, &RoadLayer::incomingUpdate, this);
   }
 
   if(dsrv_)
@@ -118,11 +117,11 @@ void StaticLayer::onInitialize()
 
   dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
-      &StaticLayer::reconfigureCB, this, _1, _2);
+      &RoadLayer::reconfigureCB, this, _1, _2);
   dsrv_->setCallback(cb);
 }
 
-void StaticLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
+void RoadLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
   if (config.enabled != enabled_)
   {
@@ -134,7 +133,7 @@ void StaticLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_
   }
 }
 
-void StaticLayer::matchSize()
+void RoadLayer::matchSize()
 {
   // If we are using rolling costmap, the static map should not match
   if (!layered_costmap_->isRolling())
@@ -145,7 +144,7 @@ void StaticLayer::matchSize()
   }
 }
 
-unsigned char StaticLayer::interpretValue(unsigned char value)
+unsigned char RoadLayer::interpretValue(unsigned char value)
 {
   //check if the static value is above the unknown or lethal thresholds
   if (track_unknown_space_ && value == unknown_cost_value_)
@@ -161,7 +160,7 @@ unsigned char StaticLayer::interpretValue(unsigned char value)
   return scale * LETHAL_OBSTACLE; // transform to:  0-LETHAL_OBSTACLE
 }
 
-void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
+void RoadLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 {
   unsigned int size_x = new_map->info.width, size_y = new_map->info.height;
 
@@ -189,62 +188,39 @@ void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
     resizeMap(size_x, size_y, new_map->info.resolution, new_map->info.origin.position.x, new_map->info.origin.position.y);
   }
 
-  unsigned int index = 0;
-
+  memset(costmap_, 200, size_x_ * size_y_ * sizeof(unsigned char)); //clear the costMap_
   //initialize the costmap with static data
-  for (unsigned int i = 0; i < size_y; ++i)
+  poin2f roadKeyPoints[7]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
+                           poin2f(6.0,18.0), poin2f(16.0,10.0)};
+  poin2i roadKeyMaps[7];
+  for (unsigned int cp = 0; cp < 7; ++cp)
   {
-    for (unsigned int j = 0; j < size_x; ++j)
-    {
-      unsigned char value = new_map->data[index];
-      costmap_[index] = interpretValue(value);
-      ++index;
-    }
+      if (!worldToMap(roadKeyPoints[cp].x, roadKeyPoints[cp].y, roadKeyMaps[cp].x, roadKeyMaps[cp].y))
+      {
+          return ;
+      }
   }
 
-//  poin2f roadKeyPoints[7]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
-//                           poin2f(16.0,18.0), poin2f(16.0,10.0)};
-//  poin2i roadKeyMaps[7];
-//  for (unsigned int cp = 0; cp < 7; cp++)
-//  {
-//      if (!worldToMap(roadKeyPoints[cp].x, roadKeyPoints[cp].y, roadKeyMaps[cp].x, roadKeyMaps[cp].y))
-//      {
-//          return ;
-//      }
-//     // cout<<"mapPoint"<< roadKeyMaps[cp].x<<"  "<< roadKeyMaps[cp].y<<endl;
-//  }
-//  cout<<"finish  roadKeyMaps  "<<endl;
-//  for (unsigned int cp = 1; cp < 6; cp++)
-//  {
-//      for (unsigned int i = roadKeyMaps[cp].y; i <= roadKeyMaps[cp+1].y; i++)
-//      {
-//          for (unsigned int j= roadKeyMaps[cp].x; j <= roadKeyMaps[cp+1].x; j++)
-//          {
-//              unsigned int index = getIndex(j, i);
-//             // cout<<"insert point"<<index<<endl;
-//              costmap_[index] = LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
-//          }
-//      }
-//      for (unsigned int i = roadKeyMaps[cp].y; i >= roadKeyMaps[cp+1].y; i--)
-//      {
-//          for (unsigned int j= roadKeyMaps[cp].x; j >= roadKeyMaps[cp+1].x; j--)
-//          {
-//              unsigned int index = getIndex(j, i);
-//             // cout<<"insert point"<<index<<endl;
-//              costmap_[index] = LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
-//          }
-//      }
-//  }
-
+  for (unsigned int cp = 0; cp < 6; ++cp)
+  {
+      for (unsigned int i = roadKeyMaps[i].y; i <= roadKeyMaps[i+1].y; ++i)
+      {
+          for (unsigned int j= roadKeyMaps[j].x; j <= roadKeyMaps[j+1].x; ++j)
+          {
+              unsigned int index = getIndex(j, i);
+              cout<<"insert point"<<index<<endl;
+              costmap_[index] = 50;
+          }
+      }
+  }
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;
   map_received_ = true;
   has_updated_data_ = true;
-  cout<<"incomingMap width_ height_  "<<width_<<"  "<<height_<<endl;
 }
 
-void StaticLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
+void RoadLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& update)
 {
   unsigned int di = 0;
   for (unsigned int y = 0; y < update->height ; y++)
@@ -256,62 +232,34 @@ void StaticLayer::incomingUpdate(const map_msgs::OccupancyGridUpdateConstPtr& up
       costmap_[index] = interpretValue( update->data[di++] );
     }
   }
-  //memset(costmap_, 200, size_x_ * size_y_ * sizeof(unsigned char)); //clear the costMap_
-  //initialize the costmap with static data
-//  poin2f roadKeyPoints[7]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
-//                           poin2f(6.0,18.0), poin2f(16.0,10.0)};
-//  poin2i roadKeyMaps[7];
-//  for (unsigned int cp = 0; cp < 7; ++cp)
-//  {
-//      if (!worldToMap(roadKeyPoints[cp].x, roadKeyPoints[cp].y, roadKeyMaps[cp].x, roadKeyMaps[cp].y))
-//      {
-//          return ;
-//      }
-//  }
-
-//  for (unsigned int cp = 0; cp < 6; ++cp)
-//  {
-//      for (unsigned int i = roadKeyMaps[i].y; i <= roadKeyMaps[i+1].y; ++i)
-//      {
-//          for (unsigned int j= roadKeyMaps[j].x; j <= roadKeyMaps[j+1].x; ++j)
-//          {
-//              unsigned int index = getIndex(j, i);
-//              cout<<"insert point"<<index<<endl;
-//              costmap_[index] = LETHAL_OBSTACLE;
-//          }
-//      }
-//  }
-
   x_ = update->x;
   y_ = update->y;
   width_ = update->width;
   height_ = update->height;
   has_updated_data_ = true;
-  cout<<"incomingUpdate width_ height_  "<<width_<<"  "<<height_<<endl;
 }
 
-void StaticLayer::activate()
+void RoadLayer::activate()
 {
   onInitialize();
 }
 
-void StaticLayer::deactivate()
+void RoadLayer::deactivate()
 {
   map_sub_.shutdown();
   if (subscribe_to_updates_)
     map_update_sub_.shutdown();
 }
 
-void StaticLayer::reset()
+void RoadLayer::reset()
 {
   deactivate();
   activate();
 }
 
-void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
+void RoadLayer::updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y,
                                double* max_x, double* max_y)
 {
-    //cout<<"update static bounds"<<endl;
   if (!map_received_ || !(has_updated_data_ || has_extra_bounds_))
     return;
 
@@ -327,12 +275,10 @@ void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
   *max_y = std::max(wy, *max_y);
 
   has_updated_data_ = false;
-    cout<<" "<<*min_x<<" "<<*min_y<<" "<<*max_x<<" "<<*max_y<<endl;
 }
 
-void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
+void RoadLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j)
 {
-      //  cout<<"update static updateCosts"<<endl;
   if (!map_received_)
     return;
 
@@ -359,7 +305,6 @@ void StaticLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int
           else
             master_grid.setCost(i, j, std::max(getCost(mx, my), master_grid.getCost(i, j)));
         }
-         //cout<<"update map cost: "<<mx<<" "<<my<<endl;
       }
     }
   }

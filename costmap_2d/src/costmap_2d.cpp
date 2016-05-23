@@ -206,6 +206,7 @@ void Costmap2D::mapToWorld(unsigned int mx, unsigned int my, double& wx, double&
 
 bool Costmap2D::worldToMap(double wx, double wy, unsigned int& mx, unsigned int& my) const
 {
+  //  std::cout<<origin_x_<<" "<<origin_y_<<" "<<resolution_<<" "<<size_x_<<" "<<size_y_<<std::endl;
   if (wx < origin_x_ || wy < origin_y_)
     return false;
 
