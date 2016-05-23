@@ -49,4 +49,5 @@ class GridPath : public Traceback {
 };
 
 } //end namespace global_planner
+
 #endif

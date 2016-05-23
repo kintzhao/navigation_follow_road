@@ -44,7 +44,8 @@ namespace base_local_planner {
 void LocalPlannerUtil::initialize(
     tf::TransformListener* tf,
     costmap_2d::Costmap2D* costmap,
-    std::string global_frame) {
+    std::string global_frame)
+{
   if(!initialized_) {
     tf_ = tf;
     costmap_ = costmap;
@@ -102,22 +103,25 @@ bool LocalPlannerUtil::setPlan(const std::vector<geometry_msgs::PoseStamped>& or
   return true;
 }
 
-bool LocalPlannerUtil::getLocalPlan(tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan) {
-  //get the global plan in our frame
+bool LocalPlannerUtil::getLocalPlan(tf::Stamped<tf::Pose>& robot_global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan)
+{
+  //get the global plan in our frame (and the points of the plan are in the constant distance.)
   if(!base_local_planner::transformGlobalPlan(
       *tf_,
       global_plan_,
-      global_pose,
+      robot_global_pose,
       *costmap_,
       global_frame_,
-      transformed_plan)) {
+      transformed_plan))
+  {
     ROS_WARN("Could not transform the global plan to the frame of the controller");
     return false;
   }
 
   //now we'll prune the plan based on the position of the robot
-  if(limits_.prune_plan) {
-    base_local_planner::prunePlan(global_pose, transformed_plan, global_plan_);
+  if(limits_.prune_plan)
+  {
+    base_local_planner::prunePlan(robot_global_pose, transformed_plan, global_plan_);
   }
   return true;
 }

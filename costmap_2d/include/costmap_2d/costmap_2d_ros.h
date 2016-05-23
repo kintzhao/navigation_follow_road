@@ -282,7 +282,7 @@ private:
   ros::Duration publish_cycle;
   pluginlib::ClassLoader<Layer> plugin_loader_;
   tf::Stamped<tf::Pose> old_pose_;
-  Costmap2DPublisher* publisher_;
+  Costmap2DPublisher* costMap2D_publisher_;
   dynamic_reconfigure::Server<costmap_2d::Costmap2DConfig> *dsrv_;
 
   boost::recursive_mutex configuration_mutex_;

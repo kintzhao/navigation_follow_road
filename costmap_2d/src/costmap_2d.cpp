@@ -343,7 +343,7 @@ void Costmap2D::polygonOutlineCells(const std::vector<MapLocation>& polygon, std
   {
     raytraceLine(cell_gatherer, polygon[i].x, polygon[i].y, polygon[i + 1].x, polygon[i + 1].y);
   }
-  if (!polygon.empty())
+  if (!polygon.empty()) //close
   {
     unsigned int last_index = polygon.size() - 1;
     //we also need to close the polygon by going from the last point to the first
@@ -358,7 +358,7 @@ void Costmap2D::convexFillCells(const std::vector<MapLocation>& polygon, std::ve
     return;
 
   //first get the cells that make up the outline of the polygon
-  polygonOutlineCells(polygon, polygon_cells);
+  polygonOutlineCells(polygon, polygon_cells);  //close polygon
 
   //quick bubble sort to sort points by x
   MapLocation swap;

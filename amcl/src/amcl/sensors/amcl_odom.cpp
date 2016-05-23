@@ -118,7 +118,7 @@ bool AMCLOdom::UpdateAction(pf_t *pf, AMCLSensorData *data)
   // Compute the new sample poses
   pf_sample_set_t *set;
 
-  set = pf->sets + pf->current_set;
+  set = pf->sets + pf->current_set;//use [current_set: 0/1 ] to identify the active set.
   pf_vector_t old_pose = pf_vector_sub(ndata->pose, ndata->delta);
 
   switch( this->model_type )

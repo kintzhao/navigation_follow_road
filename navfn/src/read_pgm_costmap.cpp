@@ -99,7 +99,8 @@ readPGM(const char *fname, int *width, int *height, bool raw)
   int otot = 0;
   int utot = 0;
   int ftot = 0;
-  for (int ii = 0; ii < nrows; ii++) {
+  for (int ii = 0; ii < nrows; ii++)
+  {
     pgm_readpgmrow(pgmfile, row, ncols, maxval, format);
     if (raw)			// raw costmap from ROS
     {

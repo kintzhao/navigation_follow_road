@@ -71,8 +71,8 @@
 #define COSTTYPE unsigned char	// Whatever is used...
 #endif
 
-// potential defs
-#define POT_HIGH 1.0e10		// unassigned cell potential
+// NavfnROS/potential defs
+#define POT_HIGH 1.0e10		// unassigned cell NavfnROS/potential
 
 // priority buffers
 #define PRIORITYBUFSIZE 10000
@@ -168,9 +168,9 @@ positions at about 1/2 cell resolution; else returns 0.
 
       /** cell arrays */
       COSTTYPE *costarr;		/**< cost array in 2D configuration space */
-      float   *potarr;		/**< potential array, navigation function potential */
+      float   *potarr;		/**< NavfnROS/potential array, navigation function NavfnROS/potential */
       bool    *pending;		/**< pending cells during propagation */
-      int nobs;			/**< number of obstacle cells */
+      int obstacle_totalNumber_;			/**< number of obstacle cells */
 
       /** block priority buffers */
       int *pb1, *pb2, *pb3;		/**< storage buffers for priority blocks */
@@ -178,7 +178,7 @@ positions at about 1/2 cell resolution; else returns 0.
       int curPe, nextPe, overPe; /**< end points of arrays */
 
       /** block priority thresholds */
-      float curT;			/**< current threshold */
+      float cur_threshold_;			/**< current threshold */
       float priInc;			/**< priority threshold increment */
 
       /** goal and start positions */
@@ -237,7 +237,7 @@ positions at about 1/2 cell resolution; else returns 0.
       bool propNavFnAstar(int cycles); /**< returns true if start point found */
 
       /** gradient and paths */
-      float *gradx, *grady;		/**< gradient arrays, size of potential array */
+      float *gradx, *grady;		/**< gradient arrays, size of NavfnROS/potential array */
       float *pathx, *pathy;		/**< path points, as subpixel cell coordinates */
       int npath;			/**< number of path points */
       int npathbuf;			/**< size of pathx, pathy buffers */

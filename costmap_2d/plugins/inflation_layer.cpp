@@ -196,7 +196,7 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
   {
     for (int i = min_i; i < max_i; i++)
     {
-      int index = master_grid.getIndex(i, j);
+      int index = master_grid.getIndex(i, j); //the cell indexs between (min_i,min_j)-(max_i,max_j) of  master_grid
       unsigned char cost = master_array[index];
       if (cost == LETHAL_OBSTACLE)
       {

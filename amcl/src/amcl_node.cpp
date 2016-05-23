@@ -333,7 +333,7 @@ AmclNode::AmclNode() :
   if(tmp_model_type == "beam")
     laser_model_type_ = LASER_MODEL_BEAM;
   else if(tmp_model_type == "likelihood_field")
-    laser_model_type_ = LASER_MODEL_LIKELIHOOD_FIELD;
+    laser_model_type_ = LASER_MODEL_LIKELIHOOD_FIELD;//***
   else if(tmp_model_type == "likelihood_field_prob"){
     laser_model_type_ = LASER_MODEL_LIKELIHOOD_FIELD_PROB;
   }
@@ -913,7 +913,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
     ROS_DEBUG("Setting up laser %d (frame_id=%s)\n", (int)frame_to_laser_.size(), laser_scan->header.frame_id.c_str());
     lasers_.push_back(new AMCLLaser(*laser_));
     lasers_update_.push_back(true);
-    laser_index = frame_to_laser_.size();
+    laser_index = frame_to_laser_.size();//the end
 
     tf::Stamped<tf::Pose> ident (tf::Transform(tf::createIdentityQuaternion(),
                                              tf::Vector3(0,0,0)),
@@ -1013,7 +1013,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
     odata.delta = delta;
 
     // Use the action data to update the filter
-    odom_->UpdateAction(pf_, (AMCLSensorData*)&odata);
+    odom_->UpdateAction(pf_, (AMCLSensorData*)&odata);  //motion model
 
     // Pose at last filter update
     //this->pf_odom_pose = pose;
@@ -1084,7 +1084,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
               (i * angle_increment);
     }
 
-    lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);
+    lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);  //observation model
 
     lasers_update_[laser_index] = false;
 
@@ -1197,7 +1197,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
          }
        */
 
-      pose_pub_.publish(p);
+      pose_pub_.publish(p);// the max problic robot pose
       last_published_pose = p;
 
       ROS_DEBUG("New pose: %6.3f %6.3f %6.3f",

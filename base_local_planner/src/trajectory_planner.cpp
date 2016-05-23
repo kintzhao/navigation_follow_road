@@ -250,7 +250,7 @@ namespace base_local_planner{
     double dt = sim_time_ / num_steps;
     double time = 0.0;
 
-    //create a potential trajectory
+    //create a NavfnROS/potential trajectory
     traj.resetPoints();
     traj.xv_ = vx_samp;
     traj.yv_ = vy_samp;

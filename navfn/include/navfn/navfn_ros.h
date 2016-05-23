@@ -84,7 +84,7 @@ namespace navfn {
        * @return True if a valid plan was found, false otherwise
        */
       bool makePlan(const geometry_msgs::PoseStamped& start, 
-          const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
+          const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan_vector);
 
       /**
        * @brief Given a goal pose in the world, compute a plan
@@ -105,7 +105,7 @@ namespace navfn {
       bool computePotential(const geometry_msgs::Point& world_point);
 
       /**
-       * @brief Compute a plan to a goal after the potential for a start point has already been computed (Note: You should call computePotential first)
+       * @brief Compute a plan to a goal after the NavfnROS/potential for a start point has already been computed (Note: You should call computePotential first)
        * @param goal The goal pose to create a plan to
        * @param plan The plan... filled by the planner
        * @return True if a valid plan was found, false otherwise
@@ -113,22 +113,22 @@ namespace navfn {
       bool getPlanFromPotential(const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan);
 
       /**
-       * @brief Get the potential, or naviagation cost, at a given point in the world (Note: You should call computePotential first)
-       * @param world_point The point to get the potential for 
+       * @brief Get the NavfnROS/potential, or naviagation cost, at a given point in the world (Note: You should call computePotential first)
+       * @param world_point The point to get the NavfnROS/potential for 
        * @return The navigation function's value at that point in the world
        */
       double getPointPotential(const geometry_msgs::Point& world_point);
 
       /**
-       * @brief Check for a valid potential value at a given point in the world (Note: You should call computePotential first)
-       * @param world_point The point to get the potential for 
+       * @brief Check for a valid NavfnROS/potential value at a given point in the world (Note: You should call computePotential first)
+       * @param world_point The point to get the NavfnROS/potential for 
        * @return True if the navigation function is valid at that point in the world, false otherwise
        */
       bool validPointPotential(const geometry_msgs::Point& world_point);
 
       /**
-       * @brief Check for a valid potential value at a given point in the world (Note: You should call computePotential first)
-       * @param world_point The point to get the potential for 
+       * @brief Check for a valid NavfnROS/potential value at a given point in the world (Note: You should call computePotential first)
+       * @param world_point The point to get the NavfnROS/potential for 
        * @param tolerance The tolerance on searching around the world_point specified
        * @return True if the navigation function is valid at that point in the world, false otherwise
        */
@@ -165,9 +165,11 @@ namespace navfn {
       void mapToWorld(double mx, double my, double& wx, double& wy);
       void clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my);
       double planner_window_x_, planner_window_y_, default_tolerance_;
+      bool use_dijkstra_;
       std::string tf_prefix_;
       boost::mutex mutex_;
       ros::ServiceServer make_plan_srv_;
+      bool is_dijkstra_;
   };
 };
 

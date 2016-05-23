@@ -62,7 +62,7 @@ NavWin::drawPot(NavFn *nav)
 	im = new uchar[nw*nh*3];
 
 
-      // draw potential
+      // draw NavfnROS/potential
       for (int i=0; i<height-dec+1; i+=dec)
 	{
 	  float *pp = pot + i*width;

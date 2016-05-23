@@ -85,9 +85,10 @@ namespace carrot_planner {
 
 
   bool CarrotPlanner::makePlan(const geometry_msgs::PoseStamped& start, 
-      const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
-
-    if(!initialized_){
+      const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan)
+  {
+    if(!initialized_)
+    {
       ROS_ERROR("The planner has not been initialized, please call initialize() to use the planner");
       return false;
     }
@@ -97,7 +98,8 @@ namespace carrot_planner {
     plan.clear();
     costmap_ = costmap_ros_->getCostmap();
 
-    if(goal.header.frame_id != costmap_ros_->getGlobalFrameID()){
+    if(goal.header.frame_id != costmap_ros_->getGlobalFrameID())
+    {
       ROS_ERROR("This planner as configured will only accept goals in the %s frame, but a goal was sent in the %s frame.", 
           costmap_ros_->getGlobalFrameID().c_str(), goal.header.frame_id.c_str());
       return false;
@@ -146,7 +148,7 @@ namespace carrot_planner {
       target_yaw = angles::normalize_angle(start_yaw + scale * diff_yaw);
       
       double footprint_cost = footprintCost(target_x, target_y, target_yaw);
-      if(footprint_cost >= 0)
+      if(footprint_cost >= 0)  //?? may be change .
       {
           done = true;
       }

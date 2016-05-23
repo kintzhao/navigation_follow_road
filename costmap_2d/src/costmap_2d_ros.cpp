@@ -63,7 +63,7 @@ void move_parameter(ros::NodeHandle& old_h, ros::NodeHandle& new_h, std::string 
 Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
     layered_costmap_(NULL), name_(name), tf_(tf), stop_updates_(false), initialized_(true), stopped_(false), robot_stopped_(
         false), map_update_thread_(NULL), last_publish_(0), plugin_loader_("costmap_2d",
-                                                                           "costmap_2d::Layer"), publisher_(
+                                                                           "costmap_2d::Layer"), costMap2D_publisher_(
         NULL)
 {
   ros::NodeHandle private_nh("~/" + name);
@@ -138,7 +138,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
   readFootprintFromParams( private_nh );
 
-  publisher_ = new Costmap2DPublisher(&private_nh, layered_costmap_->getCostmap(), global_frame_, "costmap", always_send_full_costmap);
+  costMap2D_publisher_ = new Costmap2DPublisher(&private_nh, layered_costmap_->getCostmap(), global_frame_, "costmap", always_send_full_costmap);
 
   // create a thread to handle updating the map
   stop_updates_ = false;
@@ -168,8 +168,8 @@ Costmap2DROS::~Costmap2DROS()
     map_update_thread_->join();
     delete map_update_thread_;
   }
-  if (publisher_ != NULL)
-    delete publisher_;
+  if (costMap2D_publisher_ != NULL)
+    delete costMap2D_publisher_;
 
   delete layered_costmap_;
   delete dsrv_;
@@ -554,12 +554,12 @@ void Costmap2DROS::mapUpdateLoop(double frequency)
     {
       unsigned int x0, y0, xn, yn;
       layered_costmap_->getBounds(&x0, &xn, &y0, &yn);
-      publisher_->updateBounds(x0, xn, y0, yn);
+      costMap2D_publisher_->updateBounds(x0, xn, y0, yn);
 
       ros::Time now = ros::Time::now();
       if (last_publish_ + publish_cycle < now)
       {
-        publisher_->publishCostmap();
+        costMap2D_publisher_->publishCostmap();
         last_publish_ = now;
       }
     }

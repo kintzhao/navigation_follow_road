@@ -175,12 +175,12 @@ namespace move_base {
 
       tf::TransformListener& tf_;
 
-      MoveBaseActionServer* as_;
+      MoveBaseActionServer* action_server_;
 
-      boost::shared_ptr<nav_core::BaseLocalPlanner> tc_;
-      costmap_2d::Costmap2DROS* planner_costmap_ros_, *controller_costmap_ros_;
+      boost::shared_ptr<nav_core::BaseLocalPlanner> local_planner_;
+      costmap_2d::Costmap2DROS* global_costmap_, *local_costmap_;
 
-      boost::shared_ptr<nav_core::BaseGlobalPlanner> planner_;
+      boost::shared_ptr<nav_core::BaseGlobalPlanner> golbal_planner_;
       std::string robot_base_frame_, global_frame_;
 
       std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > recovery_behaviors_;
@@ -196,22 +196,23 @@ namespace move_base {
       bool shutdown_costmaps_, clearing_rotation_allowed_, recovery_behavior_enabled_;
       double oscillation_timeout_, oscillation_distance_;
 
-      MoveBaseState state_;
+
+      MoveBaseState move_base_state_;
       RecoveryTrigger recovery_trigger_;
 
-      ros::Time last_valid_plan_, last_valid_control_, last_oscillation_reset_;
+      ros::Time last_valid_plan_time_, last_valid_control_, last_oscillation_reset_;
       geometry_msgs::PoseStamped oscillation_pose_;
       pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
       pluginlib::ClassLoader<nav_core::BaseLocalPlanner> blp_loader_;
       pluginlib::ClassLoader<nav_core::RecoveryBehavior> recovery_loader_;
 
       //set up plan triple buffer
-      std::vector<geometry_msgs::PoseStamped>* planner_plan_;
-      std::vector<geometry_msgs::PoseStamped>* latest_plan_;
-      std::vector<geometry_msgs::PoseStamped>* controller_plan_;
+      std::vector<geometry_msgs::PoseStamped>* planner_plan_buffer_;
+      std::vector<geometry_msgs::PoseStamped>* latest_plan_buffer_;
+      std::vector<geometry_msgs::PoseStamped>* controller_plan_buffer_;
 
       //set up the planner's thread
-      bool runPlanner_;
+      bool enable_run_planner_;
       boost::mutex planner_mutex_;
       boost::condition_variable planner_cond_;
       geometry_msgs::PoseStamped planner_goal_;
@@ -225,8 +226,8 @@ namespace move_base {
 
       move_base::MoveBaseConfig last_config_;
       move_base::MoveBaseConfig default_config_;
-      bool setup_, p_freq_change_, c_freq_change_;
-      bool new_global_plan_;
+      bool setup_, p_freq_change_, is_control_freq_change_;
+      bool is_new_global_plan_;
   };
 };
 #endif

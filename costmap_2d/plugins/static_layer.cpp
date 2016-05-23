@@ -145,7 +145,7 @@ unsigned char StaticLayer::interpretValue(unsigned char value)
     return FREE_SPACE;
 
   double scale = (double) value / lethal_threshold_;
-  return scale * LETHAL_OBSTACLE;
+  return scale * LETHAL_OBSTACLE; // transform to:  0-LETHAL_OBSTACLE
 }
 
 void StaticLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
@@ -241,7 +241,6 @@ void StaticLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
   useExtraBounds(min_x, min_y, max_x, max_y);
 
   double wx, wy;
-
   mapToWorld(x_, y_, wx, wy);
   *min_x = std::min(wx, *min_x);
   *min_y = std::min(wy, *min_y);

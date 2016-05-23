@@ -113,7 +113,9 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         push_cur(k-nx_+1);
         push_cur(k+nx_*2);
         push_cur(k+nx_*2+1);
-    }else{
+    }
+    else
+    {
         potential[k] = 0;
         push_cur(k+1);
         push_cur(k-1);
@@ -129,8 +131,8 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
     int startCell = toIndex(end_x, end_y);
 
     for (; cycle < cycles; cycle++) // go for this many cycles, unless interrupted
-            {
-        // 
+    {
+        //
         if (currentEnd_ == 0 && nextEnd_ == 0) // priority blocks empty
             return false;
 
@@ -161,9 +163,9 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         // see if we're done with this priority level
         if (currentEnd_ == 0) {
             threshold_ += priorityIncrement_;    // increment priority threshold
-            currentEnd_ = overEnd_;    // set current to overflow block
+            currentEnd_ = overEnd_;             // set current to overflow block
             overEnd_ = 0;
-            pb = currentBuffer_;        // swap buffers
+            pb = currentBuffer_;              // swap buffers
             currentBuffer_ = overBuffer_;
             overBuffer_ = pb;
         }

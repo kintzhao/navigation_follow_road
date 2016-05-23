@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 	 (int)(t1-t0), (int)(t2-t1), (int)(t2-t0));
 #endif
 
-  // draw potential field
+  // draw NavfnROS/potential field
   float mmax = 0.0;
   float *pp = nav->potarr;
   int ntot = 0;

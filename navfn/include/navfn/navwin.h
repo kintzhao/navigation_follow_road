@@ -26,7 +26,7 @@ namespace navfn {
       int pw,ph;			// width and height of pot field
       int dec, inc;			// decimation or expansion for display
 
-      float maxval;			// max potential value
+      float maxval;			// max NavfnROS/potential value
       void drawPot(NavFn *nav);	// draw everything...
 
       void drawOverlay();

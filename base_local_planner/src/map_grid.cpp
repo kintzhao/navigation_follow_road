@@ -122,8 +122,10 @@ namespace base_local_planner{
 
 
   //reset the path_dist and goal_dist fields for all cells
-  void MapGrid::resetPathDist(){
-    for(unsigned int i = 0; i < map_.size(); ++i) {
+  void MapGrid::resetPathDist()
+  {
+    for(unsigned int i = 0; i < map_.size(); ++i)
+    {
       map_[i].target_dist = unreachableCellCosts();
       map_[i].target_mark = false;
       map_[i].within_robot = false;
@@ -209,7 +211,8 @@ namespace base_local_planner{
 
   //mark the point of the costmap as local goal where global_plan first leaves the area (or its last point)
   void MapGrid::setLocalGoal(const costmap_2d::Costmap2D& costmap,
-      const std::vector<geometry_msgs::PoseStamped>& global_plan) {
+      const std::vector<geometry_msgs::PoseStamped>& global_plan)
+  {
     sizeCheck(costmap.getSizeInCellsX(), costmap.getSizeInCellsY());
 
     int local_goal_x = -1;
@@ -220,7 +223,8 @@ namespace base_local_planner{
     adjustPlanResolution(global_plan, adjusted_global_plan, costmap.getResolution());
 
     // skip global path points until we reach the border of the local map
-    for (unsigned int i = 0; i < adjusted_global_plan.size(); ++i) {
+    for (unsigned int i = 0; i < adjusted_global_plan.size(); ++i)
+    {
       double g_x = adjusted_global_plan[i].pose.position.x;
       double g_y = adjusted_global_plan[i].pose.position.y;
       unsigned int map_x, map_y;
@@ -228,19 +232,24 @@ namespace base_local_planner{
         local_goal_x = map_x;
         local_goal_y = map_y;
         started_path = true;
-      } else {
-        if (started_path) {
+      }
+      else
+      {
+        if (started_path)
+        {
           break;
         }// else we might have a non pruned path, so we just continue
       }
     }
-    if (!started_path) {
+    if (!started_path)
+    {
       ROS_ERROR("None of the points of the global plan were in the local costmap, global plan points too far from robot");
       return;
     }
 
     queue<MapCell*> path_dist_queue;
-    if (local_goal_x >= 0 && local_goal_y >= 0) {
+    if (local_goal_x >= 0 && local_goal_y >= 0)
+    {
       MapCell& current = getCell(local_goal_x, local_goal_y);
       costmap.mapToWorld(local_goal_x, local_goal_y, goal_x_, goal_y_);
       current.target_dist = 0.0;
@@ -253,23 +262,25 @@ namespace base_local_planner{
 
 
 
-  void MapGrid::computeTargetDistance(queue<MapCell*>& dist_queue, const costmap_2d::Costmap2D& costmap){
+  void MapGrid::computeTargetDistance(queue<MapCell*>& dist_queue, const costmap_2d::Costmap2D& costmap)
+  {
     MapCell* current_cell;
     MapCell* check_cell;
     unsigned int last_col = size_x_ - 1;
     unsigned int last_row = size_y_ - 1;
-    while(!dist_queue.empty()){
+    while(!dist_queue.empty())
+    {
       current_cell = dist_queue.front();
-
-
       dist_queue.pop();
-
-      if(current_cell->cx > 0){
+      if(current_cell->cx > 0)
+      {
         check_cell = current_cell - 1;
-        if(!check_cell->target_mark){
+        if(!check_cell->target_mark)
+        {
           //mark the cell as visisted
           check_cell->target_mark = true;
-          if(updatePathCell(current_cell, check_cell, costmap)) {
+          if(updatePathCell(current_cell, check_cell, costmap))
+          {
             dist_queue.push(check_cell);
           }
         }

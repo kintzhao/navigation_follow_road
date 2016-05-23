@@ -61,7 +61,7 @@ void print_neighborhood_of_last_path_entry( navfn::NavFn* nav )
   {
     printf("%.3f, %.3f\n", nav->pathx[ i ], nav->pathy[ i ]);
   }
-  printf("potential field neighborhood of last entry:\n");
+  printf("NavfnROS/potential field neighborhood of last entry:\n");
   int xf = nav->pathx[ nav->npath-1 ];
   int yf = nav->pathy[ nav->npath-1 ];
 

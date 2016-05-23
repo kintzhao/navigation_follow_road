@@ -66,21 +66,24 @@ namespace base_local_planner {
     pub.publish(gui_path);
   }
 
-  void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& plan, std::vector<geometry_msgs::PoseStamped>& global_plan){
-    ROS_ASSERT(global_plan.size() >= plan.size());
-    std::vector<geometry_msgs::PoseStamped>::iterator it = plan.begin();
+  void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan, std::vector<geometry_msgs::PoseStamped>& global_plan)
+  {
+    ROS_ASSERT(global_plan.size() >= transformed_plan.size());
+    std::vector<geometry_msgs::PoseStamped>::iterator it = transformed_plan.begin();
     std::vector<geometry_msgs::PoseStamped>::iterator global_it = global_plan.begin();
-    while(it != plan.end()){
+    while(it != transformed_plan.end())
+    {
       const geometry_msgs::PoseStamped& w = *it;
       // Fixed error bound of 2 meters for now. Can reduce to a portion of the map size or based on the resolution
       double x_diff = global_pose.getOrigin().x() - w.pose.position.x;
       double y_diff = global_pose.getOrigin().y() - w.pose.position.y;
       double distance_sq = x_diff * x_diff + y_diff * y_diff;
-      if(distance_sq < 1){
+      if(distance_sq < 1)
+      {
         ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.getOrigin().x(), global_pose.getOrigin().y(), w.pose.position.x, w.pose.position.y);
         break;
       }
-      it = plan.erase(it);
+      it = transformed_plan.erase(it);
       global_it = global_plan.erase(global_it);
     }
   }
@@ -91,7 +94,8 @@ namespace base_local_planner {
       const tf::Stamped<tf::Pose>& global_pose,
       const costmap_2d::Costmap2D& costmap,
       const std::string& global_frame,
-      std::vector<geometry_msgs::PoseStamped>& transformed_plan){
+      std::vector<geometry_msgs::PoseStamped>& transformed_plan)
+  {
     const geometry_msgs::PoseStamped& plan_pose = global_plan[0];
 
     transformed_plan.clear();
@@ -124,11 +128,13 @@ namespace base_local_planner {
       double sq_dist = 0;
 
       //we need to loop to a point on the plan that is within a certain distance of the robot
-      while(i < (unsigned int)global_plan.size()) {
+      while(i < (unsigned int)global_plan.size())
+      {
         double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
         double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
         sq_dist = x_diff * x_diff + y_diff * y_diff;
-        if (sq_dist <= sq_dist_threshold) {
+        if (sq_dist <= sq_dist_threshold)
+        {
           break;
         }
         ++i;
@@ -138,7 +144,8 @@ namespace base_local_planner {
       geometry_msgs::PoseStamped newer_pose;
 
       //now we'll transform until points are outside of our distance threshold
-      while(i < (unsigned int)global_plan.size() && sq_dist <= sq_dist_threshold) {
+      while(i < (unsigned int)global_plan.size() && sq_dist <= sq_dist_threshold)
+      {
         const geometry_msgs::PoseStamped& pose = global_plan[i];
         poseStampedMsgToTF(pose, tf_pose);
         tf_pose.setData(plan_to_global_transform * tf_pose);

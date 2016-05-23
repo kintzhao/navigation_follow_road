@@ -130,14 +130,20 @@ namespace dwa_local_planner {
     //just do an upward search for the frequency at which its being run. This
     //also allows the frequency to be overwritten locally.
     std::string controller_frequency_param_name;
-    if(!private_nh.searchParam("controller_frequency", controller_frequency_param_name)) {
+    if(!private_nh.searchParam("controller_frequency", controller_frequency_param_name))
+    {
       sim_period_ = 0.05;
-    } else {
+    }
+    else
+    {
       double controller_frequency = 0;
       private_nh.param(controller_frequency_param_name, controller_frequency, 20.0);
-      if(controller_frequency > 0) {
+      if(controller_frequency > 0)
+      {
         sim_period_ = 1.0 / controller_frequency;
-      } else {
+      }
+      else
+      {
         ROS_WARN("A controller_frequency less than 0 has been set. Ignoring the parameter, assuming a rate of 20Hz");
         sim_period_ = 0.05;
       }
@@ -182,14 +188,16 @@ namespace dwa_local_planner {
   }
 
   // used for visualization only, total_costs are not really total costs
-  bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost) {
+  bool DWAPlanner::getCellCosts(int cx, int cy, float &path_cost, float &goal_cost, float &occ_cost, float &total_cost)
+  {
 
     path_cost = path_costs_.getCellCosts(cx, cy);
     goal_cost = goal_costs_.getCellCosts(cx, cy);
     occ_cost = planner_util_->getCostmap()->getCost(cx, cy);
     if (path_cost == path_costs_.obstacleCosts() ||
         path_cost == path_costs_.unreachableCellCosts() ||
-        occ_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
+        occ_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+    {
       return false;
     }
 
@@ -201,7 +209,8 @@ namespace dwa_local_planner {
     return true;
   }
 
-  bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan) {
+  bool DWAPlanner::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan)
+  {
     oscillation_costs_.resetOscillationFlags();
     return planner_util_->setPlan(orig_global_plan);
   }
@@ -213,10 +222,11 @@ namespace dwa_local_planner {
   bool DWAPlanner::checkTrajectory(
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
-      Eigen::Vector3f vel_samples){
+      Eigen::Vector3f vel_samples)
+  {
     oscillation_costs_.resetOscillationFlags();
     base_local_planner::Trajectory traj;
-    geometry_msgs::PoseStamped goal_pose = global_plan_.back();
+    geometry_msgs::PoseStamped goal_pose = global_plan_vector_.back();
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
     base_local_planner::LocalPlannerLimits limits = planner_util_->getCurrentLimits();
     generator_.initialise(pos,
@@ -238,23 +248,25 @@ namespace dwa_local_planner {
 
 
   void DWAPlanner::updatePlanAndLocalCosts(
-      tf::Stamped<tf::Pose> global_pose,
-      const std::vector<geometry_msgs::PoseStamped>& new_plan) {
-    global_plan_.resize(new_plan.size());
-    for (unsigned int i = 0; i < new_plan.size(); ++i) {
-      global_plan_[i] = new_plan[i];
+      tf::Stamped<tf::Pose> robot_global_pose, const std::vector<geometry_msgs::PoseStamped>& transformed_plan)
+  {
+    global_plan_vector_.resize(transformed_plan.size());
+    for (unsigned int i = 0; i < transformed_plan.size(); ++i)
+    {
+      global_plan_vector_[i] = transformed_plan[i];
     }
 
     // costs for going away from path
-    path_costs_.setTargetPoses(global_plan_);
+    path_costs_.setTargetPoses(global_plan_vector_);
 
     // costs for not going towards the local goal as much as possible
-    goal_costs_.setTargetPoses(global_plan_);
+    goal_costs_.setTargetPoses(global_plan_vector_);
 
     // alignment costs
-    geometry_msgs::PoseStamped goal_pose = global_plan_.back();
+    geometry_msgs::PoseStamped goal_pose = global_plan_vector_.back();
 
-    Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
+    Eigen::Vector3f pos(robot_global_pose.getOrigin().getX(), robot_global_pose.getOrigin().getY(), tf::getYaw(robot_global_pose.getRotation()));
+
     double sq_dist =
         (pos[0] - goal_pose.pose.position.x) * (pos[0] - goal_pose.pose.position.x) +
         (pos[1] - goal_pose.pose.position.y) * (pos[1] - goal_pose.pose.position.y);
@@ -264,22 +276,28 @@ namespace dwa_local_planner {
     // path for the robot center. Choosing the final position after
     // turning towards goal orientation causes instability when the
     // robot needs to make a 180 degree turn at the end
-    std::vector<geometry_msgs::PoseStamped> front_global_plan = global_plan_;
+
+    std::vector<geometry_msgs::PoseStamped> front_global_plan = global_plan_vector_;
     double angle_to_goal = atan2(goal_pose.pose.position.y - pos[1], goal_pose.pose.position.x - pos[0]);
+
     front_global_plan.back().pose.position.x = front_global_plan.back().pose.position.x +
       forward_point_distance_ * cos(angle_to_goal);
+
     front_global_plan.back().pose.position.y = front_global_plan.back().pose.position.y + forward_point_distance_ *
       sin(angle_to_goal);
 
     goal_front_costs_.setTargetPoses(front_global_plan);
     
     // keeping the nose on the path
-    if (sq_dist > forward_point_distance_ * forward_point_distance_ * cheat_factor_) {
+    if (sq_dist > forward_point_distance_ * forward_point_distance_ * cheat_factor_)
+    {
       double resolution = planner_util_->getCostmap()->getResolution();
       alignment_costs_.setScale(resolution * pdist_scale_ * 0.5);
       // costs for robot being aligned with path (nose on path, not ju
-      alignment_costs_.setTargetPoses(global_plan_);
-    } else {
+      alignment_costs_.setTargetPoses(global_plan_vector_);
+    }
+    else
+    {
       // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.
       alignment_costs_.setScale(0.0);
     }
@@ -293,8 +311,8 @@ namespace dwa_local_planner {
       tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       tf::Stamped<tf::Pose>& drive_velocities,
-      std::vector<geometry_msgs::Point> footprint_spec) {
-
+      std::vector<geometry_msgs::Point> footprint_spec)
+  {
     obstacle_costs_.setFootprint(footprint_spec);
 
     //make sure that our configuration doesn't change mid-run
@@ -302,7 +320,7 @@ namespace dwa_local_planner {
 
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
     Eigen::Vector3f vel(global_vel.getOrigin().getX(), global_vel.getOrigin().getY(), tf::getYaw(global_vel.getRotation()));
-    geometry_msgs::PoseStamped goal_pose = global_plan_.back();
+    geometry_msgs::PoseStamped goal_pose = global_plan_vector_.back();
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
     base_local_planner::LocalPlannerLimits limits = planner_util_->getCurrentLimits();
 
@@ -316,7 +334,7 @@ namespace dwa_local_planner {
     result_traj_.cost_ = -7;
     // find best trajectory by sampling and scoring the samples
     std::vector<base_local_planner::Trajectory> all_explored;
-    scored_sampling_planner_.findBestTrajectory(result_traj_, &all_explored);
+    scored_sampling_planner_.findBestTrajectory(result_traj_, &all_explored); // get cmd and vel sample explored
 
     if(publish_traj_pc_)
     {
@@ -330,10 +348,10 @@ namespace dwa_local_planner {
         traj_cloud_->header = pcl_conversions::toPCL(header);
         for(std::vector<base_local_planner::Trajectory>::iterator t=all_explored.begin(); t != all_explored.end(); ++t)
         {
-            if(t->cost_<0)
-                continue;
+            if(t->cost_<0)   continue;
             // Fill out the plan
-            for(unsigned int i = 0; i < t->getPointsSize(); ++i) {
+            for(unsigned int i = 0; i < t->getPointsSize(); ++i)
+            {
                 double p_x, p_y, p_th;
                 t->getPoint(i, p_x, p_y, p_th);
                 pt.x=p_x;
@@ -348,7 +366,8 @@ namespace dwa_local_planner {
     }
 
     // verbose publishing of point clouds
-    if (publish_cost_grid_pc_) {
+    if (publish_cost_grid_pc_)
+    {
       //we'll publish the visualization of the costs to rviz before returning our best trajectory
       map_viz_.publishCostCloud(planner_util_->getCostmap());
     }
@@ -357,9 +376,12 @@ namespace dwa_local_planner {
     oscillation_costs_.updateOscillationFlags(pos, &result_traj_, planner_util_->getCurrentLimits().min_trans_vel);
 
     //if we don't have a legal trajectory, we'll just command zero
-    if (result_traj_.cost_ < 0) {
+    if (result_traj_.cost_ < 0)
+    {
       drive_velocities.setIdentity();
-    } else {
+    }
+    else
+    {
       tf::Vector3 start(result_traj_.xv_, result_traj_.yv_, 0);
       drive_velocities.setOrigin(start);
       tf::Matrix3x3 matrix;

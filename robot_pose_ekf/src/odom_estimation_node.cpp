@@ -445,7 +445,7 @@ namespace estimation
           }
         }
         if (self_diagnose_ && !diagnostics)
-          ROS_WARN("Robot pose ekf diagnostics discovered a potential problem");
+          ROS_WARN("Robot pose ekf diagnostics discovered a NavfnROS/potential problem");
       }
 
 

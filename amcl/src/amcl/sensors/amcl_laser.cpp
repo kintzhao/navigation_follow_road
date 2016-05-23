@@ -126,7 +126,7 @@ bool AMCLLaser::UpdateSensor(pf_t *pf, AMCLSensorData *data)
   // Apply the laser sensor model
   if(this->model_type == LASER_MODEL_BEAM)
     pf_update_sensor(pf, (pf_sensor_model_fn_t) BeamModel, data);
-  else if(this->model_type == LASER_MODEL_LIKELIHOOD_FIELD)
+  else if(this->model_type == LASER_MODEL_LIKELIHOOD_FIELD)// <param name="laser_model_type"     value="likelihood_field"/>
     pf_update_sensor(pf, (pf_sensor_model_fn_t) LikelihoodFieldModel, data);  
   else if(this->model_type == LASER_MODEL_LIKELIHOOD_FIELD_PROB)
     pf_update_sensor(pf, (pf_sensor_model_fn_t) LikelihoodFieldModelProb, data);  

@@ -411,11 +411,11 @@ void pf_update_resample(pf_t *pf)
     sample_b->weight = 1.0;
     total += sample_b->weight;
 
-    // Add sample to histogram
+    // Add sample to histogram      new empty bin
     pf_kdtree_insert(set_b->kdtree, sample_b->pose, sample_b->weight);
 
     // See if we have enough samples yet
-    if (set_b->sample_count > pf_resample_limit(pf, set_b->kdtree->leaf_count))
+    if (set_b->sample_count > pf_resample_limit(pf, set_b->kdtree->leaf_count))  //kld
       break;
   }
   

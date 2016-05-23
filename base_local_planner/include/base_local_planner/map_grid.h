@@ -141,7 +141,8 @@ namespace base_local_planner{
        * returns a value indicating cell was not reached by wavefront
        * propagation of set cells. (is behind walls, regarding the region covered by grid)
        */
-      inline double unreachableCellCosts() {
+      inline double unreachableCellCosts()
+      {
         return map_.size() + 1;
       }
 
