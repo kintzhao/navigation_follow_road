@@ -949,7 +949,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
     laser_index = frame_to_laser_[laser_scan->header.frame_id];
   }
 
-  // Where was the robot when this scan was taken?
+  // Where was the robot when this scan was taken? from odom at tf
   pf_vector_t pose;
   if(!getOdomPose(latest_odom_pose_, pose.v[0], pose.v[1], pose.v[2],
                   laser_scan->header.stamp, base_frame_id_))
@@ -961,7 +961,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
 
   pf_vector_t delta = pf_vector_zero();
 
-  if(pf_init_)
+  if(pf_init_)//true stand finish init()
   {
     // Compute change in pose
     //delta = pf_vector_coord_sub(pose, pf_odom_pose_);
@@ -1000,7 +1000,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
     resample_count_ = 0;
   }
   // If the robot has moved, update the filter
-  else if(pf_init_ && lasers_update_[laser_index])
+  else if(pf_init_ && lasers_update_[laser_index]) //lasers_update_  ???
   {
     //printf("pose\n");
     //pf_vector_fprintf(pose, stdout, "%.3f");
@@ -1074,7 +1074,7 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
     for(int i=0;i<ldata.range_count;i++)
     {
       // amcl doesn't (yet) have a concept of min range.  So we'll map short
-      // readings to max range.
+      // readings to max range.   //???
       if(laser_scan->ranges[i] <= range_min)
         ldata.ranges[i][0] = ldata.range_max;
       else
@@ -1084,16 +1084,17 @@ AmclNode::laserReceived(const sensor_msgs::LaserScanConstPtr& laser_scan)
               (i * angle_increment);
     }
 
+
     lasers_[laser_index]->UpdateSensor(pf_, (AMCLSensorData*)&ldata);  //observation model
 
     lasers_update_[laser_index] = false;
 
     pf_odom_pose_ = pose;
 
-    // Resample the particles
+    // Resample the particles ; per count to update resample
     if(!(++resample_count_ % resample_interval_))
     {
-      pf_update_resample(pf_);
+      pf_update_resample(pf_);  //**************
       resampled = true;
     }
 

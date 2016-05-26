@@ -228,6 +228,8 @@ namespace move_base {
       move_base::MoveBaseConfig default_config_;
       bool setup_, p_freq_change_, is_control_freq_change_;
       bool is_new_global_plan_;
+
+      bool planPath(std::vector<geometry_msgs::PoseStamped>& plan);
   };
 };
 #endif

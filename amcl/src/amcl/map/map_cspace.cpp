@@ -134,19 +134,19 @@ void map_update_cspace(map_t *map, double max_occ_dist)
   cell.map_ = map;
   for(int i=0; i<map->size_x; i++)
   {
-    cell.src_i_ = cell.i_ = i;
-    for(int j=0; j<map->size_y; j++)
-    {
-      if(map->cells[MAP_INDEX(map, i, j)].occ_state == +1)
+      cell.src_i_ = cell.i_ = i;
+      for(int j=0; j<map->size_y; j++)
       {
-	map->cells[MAP_INDEX(map, i, j)].occ_dist = 0.0;
-	cell.src_j_ = cell.j_ = j;
-	marked[MAP_INDEX(map, i, j)] = 1;
-	Q.push(cell);
+          if(map->cells[MAP_INDEX(map, i, j)].occ_state == +1)
+          {
+              map->cells[MAP_INDEX(map, i, j)].occ_dist = 0.0;
+              cell.src_j_ = cell.j_ = j;
+              marked[MAP_INDEX(map, i, j)] = 1;
+              Q.push(cell);
+          }
+          else
+              map->cells[MAP_INDEX(map, i, j)].occ_dist = max_occ_dist;
       }
-      else
-	map->cells[MAP_INDEX(map, i, j)].occ_dist = max_occ_dist;
-    }
   }
 
   while(!Q.empty())

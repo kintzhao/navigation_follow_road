@@ -190,40 +190,57 @@ void RoadLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 
   memset(costmap_, 253, size_x_ * size_y_ * sizeof(unsigned char)); //clear the costMap_
   //initialize the costmap with static data
-  poin2f roadKeyPoints[7]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
-                           poin2f(16.0,18.0), poin2f(16.0,10.0)};
-  poin2i roadKeyMaps[7];
-  for (unsigned int cp = 0; cp < 7; cp++)
+  poin2f roadKeyPoints[12]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
+                            poin2f(16.0,18.0), poin2f(16.0,10.0),poin2f(16.0,-5.0), poin2f(6.0,-5.0),
+                            poin2f(6.0,-1.0), poin2f(0.0,-1.0), poin2f(0.0,0.0)};
+
+  poin2i roadKeyMaps[12];
+  for (unsigned int cp = 0; cp < 12; cp++)
   {
       if (!worldToMap(roadKeyPoints[cp].x, roadKeyPoints[cp].y, roadKeyMaps[cp].x, roadKeyMaps[cp].y))
       {
           return ;
       }
-     // cout<<"mapPoint"<< roadKeyMaps[cp].x<<"  "<< roadKeyMaps[cp].y<<endl;
+      // cout<<"mapPoint"<< roadKeyMaps[cp].x<<"  "<< roadKeyMaps[cp].y<<endl;
   }
   cout<<"finish  roadKeyMaps  "<<endl;
-  for (unsigned int cp =0; cp < 6; cp++)
+  for (unsigned int cp =0; cp < 11; cp++)
   {
-      for (unsigned int i = roadKeyMaps[cp].y; i <= roadKeyMaps[cp+1].y; i++)
+      cout<<"cp "<<cp<<endl;
+      int min_x = std::min(roadKeyMaps[cp].x,roadKeyMaps[cp+1].x);
+      int min_y = std::min(roadKeyMaps[cp].y,roadKeyMaps[cp+1].y);
+      int max_x = std::max(roadKeyMaps[cp].x,roadKeyMaps[cp+1].x);
+      int max_y = std::max(roadKeyMaps[cp].y,roadKeyMaps[cp+1].y);
+      for (unsigned int i = min_y; i <= max_y; i++)
       {
-          for (unsigned int j= roadKeyMaps[cp].x; j <= roadKeyMaps[cp+1].x; j++)
+          for (unsigned int j= min_x; j <= max_x; j++)
           {
               unsigned int index = getIndex(j, i);
-             // cout<<"insert point"<<index<<endl;
+               //cout<<"insert point"<<index<<endl;
               costmap_[index] = 0;//LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
           }
       }
-      for (unsigned int i = roadKeyMaps[cp].y; i >= roadKeyMaps[cp+1].y; i--)
-      {
-          for (unsigned int j= roadKeyMaps[cp].x; j >= roadKeyMaps[cp+1].x; j--)
-          {
-              unsigned int index = getIndex(j, i);
-             // cout<<"insert point"<<index<<endl;
-              costmap_[index] = 0;//LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
-          }
-      }
-  }
 
+//      for (unsigned int i = roadKeyMaps[cp].y; i <= roadKeyMaps[cp+1].y; i++)
+//      {
+//          for (unsigned int j= roadKeyMaps[cp].x; j <= roadKeyMaps[cp+1].x; j++)
+//          {
+//              unsigned int index = getIndex(j, i);
+//               //cout<<"insert point"<<index<<endl;
+//              costmap_[index] = 0;//LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
+//          }
+//      }
+//      for (unsigned int i = roadKeyMaps[cp].y; i >= roadKeyMaps[cp+1].y; i--)
+//      {
+//          for (unsigned int j= roadKeyMaps[cp].x; j >= roadKeyMaps[cp+1].x; j--)
+//          {
+//              unsigned int index = getIndex(j, i);
+//              // cout<<"insert point"<<index<<endl;
+//              costmap_[index] = 0;//LETHAL_OBSTACLE;//costmap_[index] - 40 ;//
+//          }
+//      }
+  }
+  cout<<"get roadPoint   "<<endl;
   x_ = y_ = 0;
   width_ = size_x_;
   height_ = size_y_;

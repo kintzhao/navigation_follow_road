@@ -44,6 +44,21 @@
 #include <geometry_msgs/Twist.h>
 
 namespace move_base {
+
+typedef struct poin2f
+{
+  float x;
+  float y;
+  poin2f(float a, float b)
+  { x=a; y=b;}
+}poin2f;
+typedef struct poin2i
+{
+  unsigned int x;
+  unsigned int y;
+}poin2i;
+
+
 MoveBase::MoveBase(tf::TransformListener& tf) :
     tf_(tf),
     action_server_(NULL),
@@ -652,7 +667,9 @@ void MoveBase::planThread()
 
         //run planner
         planner_plan_buffer_->clear();
-        bool is_got_plan = ( n.ok() && makePlan(temp_goal, *planner_plan_buffer_) ); // makePlan
+         bool is_got_plan = ( n.ok() && makePlan(temp_goal, *planner_plan_buffer_) ); // makePlan
+        // add the planPath vector by hand
+        //bool is_got_plan = planPath(*planner_plan_buffer_);
 
         if(is_got_plan)
         {
@@ -707,6 +724,34 @@ void MoveBase::planThread()
         }
     }
 }
+
+bool MoveBase::planPath(std::vector<geometry_msgs::PoseStamped>& plan)
+{
+    //initialize the costmap with static data
+    poin2f roadKeyPoints[12]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
+                              poin2f(16.0,18.0), poin2f(16.0,10.0),poin2f(16.0,-5.0), poin2f(6.0,-5.0),
+                              poin2f(6.0,-1.0), poin2f(0.0,-1.0), poin2f(0.0,0.0)};
+
+    std::cout<<"finish  roadKeyMaps  "<<std::endl;
+    for (unsigned int cp =0; cp < 12; cp++)
+    {
+        std::cout<<"cp "<<cp<<std::endl;
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time::now();
+        pose.header.frame_id = global_frame_;
+        pose.pose.position.x = roadKeyPoints[cp].x;
+        pose.pose.position.y = roadKeyPoints[cp].y;
+        pose.pose.position.z = 0.0;
+        pose.pose.orientation.x = 0.0;
+        pose.pose.orientation.y = 0.0;
+        pose.pose.orientation.z = 0.0;
+        pose.pose.orientation.w = 1.0;
+        plan.push_back(pose);
+    }
+    std::cout<<"get roadPoint   "<<std::endl;
+  return true;
+}
+
 
 void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal)
 {

@@ -177,7 +177,7 @@ void pf_init_model(pf_t *pf, pf_init_model_fn_t init_fn, void *init_data)
   pf_sample_set_t *set;
   pf_sample_t *sample;
 
-  set = pf->sets + pf->current_set;
+  set = pf->sets + pf->current_set; // address operation
 
   // Create the kd tree for adaptive sampling
   pf_kdtree_clear(set->kdtree);
@@ -414,8 +414,8 @@ void pf_update_resample(pf_t *pf)
     // Add sample to histogram      new empty bin
     pf_kdtree_insert(set_b->kdtree, sample_b->pose, sample_b->weight);
 
-    // See if we have enough samples yet
-    if (set_b->sample_count > pf_resample_limit(pf, set_b->kdtree->leaf_count))  //kld
+    // See if we have enough samples yet  ; current sample num : set_b->kdtree->leaf_count
+    if (set_b->sample_count > pf_resample_limit(pf, set_b->kdtree->leaf_count)) //kld-->determinate the number of sample
       break;
   }
   
