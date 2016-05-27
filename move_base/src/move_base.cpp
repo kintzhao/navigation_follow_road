@@ -45,19 +45,6 @@
 
 namespace move_base {
 
-typedef struct poin2f
-{
-  float x;
-  float y;
-  poin2f(float a, float b)
-  { x=a; y=b;}
-}poin2f;
-typedef struct poin2i
-{
-  unsigned int x;
-  unsigned int y;
-}poin2i;
-
 
 MoveBase::MoveBase(tf::TransformListener& tf) :
     tf_(tf),
@@ -99,7 +86,8 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     planner_thread_ = new boost::thread(boost::bind(&MoveBase::planThread, this));//
 
     //for comanding the base
-    vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    //vel_pub_ = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    vel_pub_ = nh.advertise<geometry_msgs::Twist>("navigation_velocity_smoother/raw_cmd_vel", 1);
     current_goal_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("current_goal", 0 );
 
     ros::NodeHandle action_nh("move_base");
@@ -109,7 +97,7 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     //they won't get any useful information back about its status, but this is useful for tools
     //like nav_view and rviz
     ros::NodeHandle simple_nh("move_base_simple");
-    goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&MoveBase::goalCB, this, _1));
+    goal_sub_ = simple_nh.subscribe<geometry_msgs::PoseStamped>("goal", 1, boost::bind(&MoveBase::goalCB, this, _1)); 
 
     //we'll assume the radius of the robot to be consistent with what's specified for the costmaps
     private_nh.param("local_costmap/inscribed_radius", inscribed_radius_, 0.325);
@@ -126,13 +114,14 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
     global_costmap_->pause();
 
     //initialize the global planner
-    try {
+    try {//bgp_loader_  ???
         //check if a non fully qualified name has potentially been passed in
         if(!bgp_loader_.isClassAvailable(global_planner_name))
         {
             std::vector<std::string> classes = bgp_loader_.getDeclaredClasses();
             for(unsigned int i = 0; i < classes.size(); ++i)
             {
+                std::cout<<"class "<<classes[i]<<std::endl;
                 if(global_planner_name == bgp_loader_.getName(classes[i]))
                 {
                     //if we've found a match... we'll get the fully qualified name and break out of the loop
@@ -191,6 +180,8 @@ MoveBase::MoveBase(tf::TransformListener& tf) :
 
     //advertise a service for getting a plan
     make_plan_srv_ = private_nh.advertiseService("make_plan", &MoveBase::planService, this);
+
+    start_send_goals_srv_ = private_nh.advertiseService("start_send_goals", &MoveBase::startSendGoals, this);
 
     //advertise a service for clearing the costmaps
     clear_costmaps_srv_ = private_nh.advertiseService("clear_costmaps", &MoveBase::clearCostmapsService, this);
@@ -343,10 +334,11 @@ void MoveBase::reconfigureCB(move_base::MoveBaseConfig &config, uint32_t level)
 
 void MoveBase::goalCB(const geometry_msgs::PoseStamped::ConstPtr& goal){
     ROS_DEBUG_NAMED("move_base","In ROS goal callback, wrapping the PoseStamped in the action message and re-sending to the server.");
+
     move_base_msgs::MoveBaseActionGoal action_goal;
     action_goal.header.stamp = ros::Time::now();
     action_goal.goal.target_pose = *goal;
-
+   //action send to action_server_ ,then happen the callback of MoveBase::executeCb
     action_goal_pub_.publish(action_goal);
 }
 
@@ -509,6 +501,21 @@ bool MoveBase::planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::R
     return true;
 }
 
+bool MoveBase::startSendGoals(std_srvs::Empty::Request &req,
+                              std_srvs::Empty::Response &res)
+{
+    count_ = 0;
+    std::cout<<"start send goal.the first goal is:"<<roadKeyPoints[count_].x<<"  "<<roadKeyPoints[count_].y<<std::endl;
+    move_base_msgs::MoveBaseActionGoal action_goal;
+    action_goal.header.stamp = ros::Time::now();
+    action_goal.goal.target_pose.header.frame_id = global_frame_;
+    action_goal.goal.target_pose.pose.position.x = roadKeyPoints[count_].x;
+    action_goal.goal.target_pose.pose.position.y = roadKeyPoints[count_].y;
+    action_goal.goal.target_pose.pose.orientation.w = 1.0;
+   //action send to action_server_ ,then happen the callback of MoveBase::executeCb
+    action_goal_pub_.publish(action_goal);
+}
+
 MoveBase::~MoveBase()
 {
     recovery_behaviors_.clear();
@@ -638,11 +645,12 @@ geometry_msgs::PoseStamped MoveBase::goalToGlobalFrame(const geometry_msgs::Pose
 void MoveBase::wakePlanner(const ros::TimerEvent& event)
 {
     // we have slept long enough for rate
-    planner_cond_.notify_one();
+    planner_cond_.notify_one();//调用notify_one的时候，启用一个线程。
 }
 
 void MoveBase::planThread()
 {
+    std::cout<<"planThread"<<std::endl;
     ROS_DEBUG_NAMED("move_base_plan_thread","Starting planner thread...");
     ros::NodeHandle n;
     ros::Timer timer;
@@ -650,12 +658,14 @@ void MoveBase::planThread()
     boost::unique_lock<boost::mutex> lock(planner_mutex_);
     while(n.ok())
     {
+        std::cout<<"planThread  n.ok()"<<std::endl;
         //check if we should run the planner (the mutex is locked)
         while(wait_for_wake || !enable_run_planner_)
         {
             //if we should not be running the planner then suspend this thread
+            std::cout<<"move_base_plan_thread ,Planner thread is suspending"<<std::endl;
             ROS_DEBUG_NAMED("move_base_plan_thread","Planner thread is suspending");
-            planner_cond_.wait(lock);
+            planner_cond_.wait(lock);//wait  notify当线程间的共享数据发生变化的时候，可以通过condition_variable来通知其他的线程。
             wait_for_wake = false;
         }
         ros::Time start_time = ros::Time::now();
@@ -667,6 +677,7 @@ void MoveBase::planThread()
 
         //run planner
         planner_plan_buffer_->clear();
+        std::cout<<"planThread  n.ok() makePlan"<<std::endl;
          bool is_got_plan = ( n.ok() && makePlan(temp_goal, *planner_plan_buffer_) ); // makePlan
         // add the planPath vector by hand
         //bool is_got_plan = planPath(*planner_plan_buffer_);
@@ -755,6 +766,7 @@ bool MoveBase::planPath(std::vector<geometry_msgs::PoseStamped>& plan)
 
 void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal)
 {
+    std::cout<<"executeCb"<<std::endl;
     if(!isQuaternionValid(move_base_goal->target_pose.pose.orientation))
     {
         action_server_->setAborted(move_base_msgs::MoveBaseResult(), "Aborting on goal because it was sent with an invalid quaternion");
@@ -789,6 +801,7 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
     ros::NodeHandle n;
     while(n.ok())
     {
+        std::cout<<"executeCb  while(ok)"<<std::endl;
         if(is_control_freq_change_)
         {
             ROS_INFO("Setting controller frequency to %.2f", controller_frequency_);
@@ -879,7 +892,26 @@ void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_g
         bool done = executeCycle(goal, global_plan_vector);
         //if we're done, then we'll return from execute
         if(done)
-            return;
+           // return;
+        {
+            count_++;
+            if(count_ >=12)
+                return;
+            else
+            {
+                std::cout<<"send next goal:"<<count_<<" "<<roadKeyPoints[count_].x<<"  "<<roadKeyPoints[count_].y<<std::endl;
+                move_base_msgs::MoveBaseActionGoal action_goal;
+                action_goal.header.stamp = ros::Time::now();
+                action_goal.goal.target_pose.header.frame_id = global_frame_;
+                action_goal.goal.target_pose.pose.position.x = roadKeyPoints[count_].x;
+                action_goal.goal.target_pose.pose.position.y = roadKeyPoints[count_].y;
+                action_goal.goal.target_pose.pose.orientation.w = 1.0;
+                //action send to action_server_ ,then happen the callback of MoveBase::executeCb
+                action_goal_pub_.publish(action_goal);
+                return;
+            }
+        }
+
 
         //check if execution of the goal has completed in some way
         ros::WallDuration t_diff = ros::WallTime::now() - start;
@@ -909,6 +941,7 @@ double MoveBase::distance(const geometry_msgs::PoseStamped& p1, const geometry_m
 
 bool MoveBase::executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan)
 {
+    std::cout<<"executeCycle"<<std::endl;
     boost::recursive_mutex::scoped_lock ecl(configuration_mutex_);
     //we need to be able to publish velocity commands
     geometry_msgs::Twist cmd_vel;

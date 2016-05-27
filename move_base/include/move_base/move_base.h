@@ -60,6 +60,19 @@
 #include "move_base/MoveBaseConfig.h"
 
 namespace move_base {
+typedef struct poin2f
+{
+  float x;
+  float y;
+  poin2f(float a, float b)
+  { x=a; y=b;}
+}poin2f;
+typedef struct poin2i
+{
+  unsigned int x;
+  unsigned int y;
+}poin2i;
+
   //typedefs to help us out with the action server so that we don't hace to type so much
   typedef actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction> MoveBaseActionServer;
 
@@ -230,6 +243,15 @@ namespace move_base {
       bool is_new_global_plan_;
 
       bool planPath(std::vector<geometry_msgs::PoseStamped>& plan);
+
+      poin2f roadKeyPoints[12]={poin2f(0.0,0.0), poin2f(7.0,0.0), poin2f(7.0,3.0), poin2f(12.0,3.0), poin2f(12.0,18.0),
+                                poin2f(16.0,18.0), poin2f(16.0,10.0),poin2f(16.0,-5.0), poin2f(6.0,-5.0),
+                                poin2f(6.0,-1.0), poin2f(0.0,-1.0), poin2f(0.0,0.0)};
+      int count_;
+      bool startSendGoals(std_srvs::Empty::Request &req,
+                                    std_srvs::Empty::Response &res);
+      ros::ServiceServer start_send_goals_srv_;
+
   };
 };
 #endif
